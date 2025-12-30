@@ -5,6 +5,7 @@ import {
   TextInput,
   View,
   FlatList,
+  Pressable,
 } from 'react-native';
 import React, { useState } from 'react';
 import { COLORS } from '../constants/colors';
@@ -12,6 +13,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import TaskCard from '../components/TaskCard';
 
 const HomeScreen = () => {
+  /*
   const tasks = [
     {
       id: '1',
@@ -32,9 +34,23 @@ const HomeScreen = () => {
       createdAt: Date.now(),
     },
   ];
+*/
 
-  const [taskList, setTaskList] = useState(tasks);
+  type Task = {
+    id: string;
+    title: string;
+    completed: boolean;
+    createdAt: number;
+  };
+
+  type TaskType = 'All' | 'Pending' | 'Completed';
+
+  const [taskList, setTaskList] = useState<Task[]>([]);
+  const [filterTask, setFilterTask] = useState<Task[]>([]);
   const [taskTitle, setTaskTitle] = useState('');
+  const [selectedType, setSelectedType] = useState<TaskType>('All');
+
+  const taskTypes: string[] = ['All', 'Pending', 'Completed'];
 
   const handleOnAddTask = () => {
     if (taskTitle.trim()) {
@@ -44,7 +60,10 @@ const HomeScreen = () => {
         completed: false,
         createdAt: Date.now(),
       };
-      setTaskList([newTask, ...taskList]);
+      const updatedTasks = [newTask, ...taskList];
+      setTaskList(updatedTasks);
+
+      handleOnApplyFiler(selectedType, updatedTasks);
     }
     setTaskTitle('');
   };
@@ -57,11 +76,33 @@ const HomeScreen = () => {
       return task;
     });
     setTaskList(updatedTasks);
+    handleOnApplyFiler(selectedType, updatedTasks);
   };
 
   const handleOnTaskDelete = (taskId: string) => {
     const updatedTasks = taskList.filter(task => task.id !== taskId);
     setTaskList(updatedTasks);
+    handleOnApplyFiler(selectedType, updatedTasks);
+  };
+
+  const handleOnApplyFiler = (type: TaskType, tasks: Task[] = taskList) => {
+    setSelectedType(type);
+
+    switch (type) {
+      case 'All':
+        setFilterTask(tasks);
+        break;
+      case 'Pending':
+        const pendingTasks = tasks.filter(task => !task.completed);
+        setFilterTask(pendingTasks);
+        break;
+      case 'Completed':
+        const completedTasks = tasks.filter(task => task.completed);
+        setFilterTask(completedTasks);
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -88,6 +129,27 @@ const HomeScreen = () => {
         <PrimaryButton title={'Add Task'} onPress={handleOnAddTask} />
       </View>
 
+      {/* Task Types Filter */}
+      <View style={styles.taskTypesContainer}>
+        {taskTypes.map((type, index) => {
+          return (
+            <Pressable
+              key={index}
+              onPress={() => handleOnApplyFiler(type as TaskType)}
+            >
+              <Text
+                style={[
+                  styles.typeText,
+                  selectedType === type && styles.selectedTypeText,
+                ]}
+              >
+                {type}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       {taskList.length === 0 && (
         <View style={styles.emptyList}>
           <Text>No tasks available</Text>
@@ -96,7 +158,7 @@ const HomeScreen = () => {
 
       {/* FlatList: Task Lists */}
       <FlatList
-        data={taskList}
+        data={filterTask}
         keyExtractor={(item: { id: string }) => item.id}
         renderItem={({ item }: any) => (
           <TaskCard
@@ -149,5 +211,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  taskTypesContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginVertical: 12,
+    marginTop: 20,
+    justifyContent: 'space-around',
+  },
+  typeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.GRAY,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  selectedTypeText: {
+    color: COLORS.WHITE,
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 8,
   },
 });
