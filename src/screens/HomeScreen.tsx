@@ -11,6 +11,13 @@ import React, { useState } from 'react';
 import { COLORS } from '../constants/colors';
 import PrimaryButton from '../components/PrimaryButton';
 import TaskCard from '../components/TaskCard';
+// reducers
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  addTask,
+  toggleTaskComplete,
+  deleteTask,
+} from '../store/slices/taskSlice';
 
 const HomeScreen = () => {
   /*
@@ -36,17 +43,21 @@ const HomeScreen = () => {
   ];
 */
 
-  type Task = {
-    id: string;
-    title: string;
-    completed: boolean;
-    createdAt: number;
-  };
+  // type Task = {
+  //   id: string;
+  //   title: string;
+  //   completed: boolean;
+  //   createdAt: number;
+  // };
 
   type TaskType = 'All' | 'Pending' | 'Completed';
 
-  const [taskList, setTaskList] = useState<Task[]>([]);
-  const [filterTask, setFilterTask] = useState<Task[]>([]);
+  // const [taskList, setTaskList] = useState<Task[]>([]);
+  // const [filterTask, setFilterTask] = useState<Task[]>([]);
+
+  const dispatch = useAppDispatch();
+  const tasks = useAppSelector(state => state.tasks.tasks);
+
   const [taskTitle, setTaskTitle] = useState('');
   const [selectedType, setSelectedType] = useState<TaskType>('All');
 
@@ -54,56 +65,52 @@ const HomeScreen = () => {
 
   const handleOnAddTask = () => {
     if (taskTitle.trim()) {
-      const newTask = {
-        id: taskList.length + 1 + '',
-        title: taskTitle,
-        completed: false,
-        createdAt: Date.now(),
-      };
-      const updatedTasks = [newTask, ...taskList];
-      setTaskList(updatedTasks);
+      dispatch(addTask(taskTitle));
 
-      handleOnApplyFiler(selectedType, updatedTasks);
+      // const newTask = {
+      //   id: taskList.length + 1 + '',
+      //   title: taskTitle,
+      //   completed: false,
+      //   createdAt: Date.now(),
+      // };
+      // const updatedTasks = [newTask, ...taskList];
+      // setTaskList(updatedTasks);
+      // handleOnApplyFiler(selectedType, updatedTasks);
     }
     setTaskTitle('');
   };
 
   const handleOnTaskToggle = (taskId: string) => {
-    const updatedTasks = taskList.map(task => {
-      if (task.id === taskId) {
-        return { ...task, completed: !task.completed };
-      }
-      return task;
-    });
-    setTaskList(updatedTasks);
-    handleOnApplyFiler(selectedType, updatedTasks);
+    dispatch(toggleTaskComplete(taskId));
+    // const updatedTasks = taskList.map(task => {
+    //   if (task.id === taskId) {
+    //     return { ...task, completed: !task.completed };
+    //   }
+    //   return task;
+    // });
+    // setTaskList(updatedTasks);
+    // handleOnApplyFiler(selectedType, updatedTasks);
   };
 
   const handleOnTaskDelete = (taskId: string) => {
-    const updatedTasks = taskList.filter(task => task.id !== taskId);
-    setTaskList(updatedTasks);
-    handleOnApplyFiler(selectedType, updatedTasks);
+    dispatch(deleteTask(taskId));
+    // const updatedTasks = taskList.filter(task => task.id !== taskId);
+    // setTaskList(updatedTasks);
+    // handleOnApplyFiler(selectedType, updatedTasks);
   };
 
-  const handleOnApplyFiler = (type: TaskType, tasks: Task[] = taskList) => {
+  const handleOnApplyFiler = (type: TaskType) => {
     setSelectedType(type);
-
-    switch (type) {
-      case 'All':
-        setFilterTask(tasks);
-        break;
-      case 'Pending':
-        const pendingTasks = tasks.filter(task => !task.completed);
-        setFilterTask(pendingTasks);
-        break;
-      case 'Completed':
-        const completedTasks = tasks.filter(task => task.completed);
-        setFilterTask(completedTasks);
-        break;
-      default:
-        break;
-    }
   };
+
+  const filterdTasks = tasks.filter(task => {
+    if (selectedType === 'Pending') {
+      return !task.completed;
+    } else if (selectedType === 'Completed') {
+      return task.completed;
+    }
+    return task;
+  });
 
   return (
     <View style={styles.mainContainer}>
@@ -150,7 +157,7 @@ const HomeScreen = () => {
         })}
       </View>
 
-      {taskList.length === 0 && (
+      {filterdTasks.length === 0 && (
         <View style={styles.emptyList}>
           <Text>No tasks available</Text>
         </View>
@@ -158,7 +165,7 @@ const HomeScreen = () => {
 
       {/* FlatList: Task Lists */}
       <FlatList
-        data={filterTask}
+        data={filterdTasks}
         keyExtractor={(item: { id: string }) => item.id}
         renderItem={({ item }: any) => (
           <TaskCard
