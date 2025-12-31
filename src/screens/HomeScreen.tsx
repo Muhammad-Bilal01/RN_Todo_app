@@ -18,6 +18,7 @@ import {
   toggleTaskComplete,
   deleteTask,
 } from '../store/slices/taskSlice';
+import { selectFilteredTasks } from '../store/selectors/tasksSelector';
 
 const HomeScreen = () => {
   /*
@@ -56,7 +57,7 @@ const HomeScreen = () => {
   // const [filterTask, setFilterTask] = useState<Task[]>([]);
 
   const dispatch = useAppDispatch();
-  const tasks = useAppSelector(state => state.tasks.tasks);
+  // const tasks = useAppSelector(state => state.tasks.tasks);
 
   const [taskTitle, setTaskTitle] = useState('');
   const [selectedType, setSelectedType] = useState<TaskType>('All');
@@ -103,14 +104,18 @@ const HomeScreen = () => {
     setSelectedType(type);
   };
 
-  const filterdTasks = tasks.filter(task => {
-    if (selectedType === 'Pending') {
-      return !task.completed;
-    } else if (selectedType === 'Completed') {
-      return task.completed;
-    }
-    return task;
-  });
+  // const filterdTasks = tasks.filter(task => {
+  //   if (selectedType === 'Pending') {
+  //     return !task.completed;
+  //   } else if (selectedType === 'Completed') {
+  //     return task.completed;
+  //   }
+  //   return task;
+  // });
+
+  const filterdTasks = useAppSelector(state =>
+    selectFilteredTasks(state, selectedType),
+  );
 
   return (
     <View style={styles.mainContainer}>

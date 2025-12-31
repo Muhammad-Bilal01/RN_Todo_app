@@ -38,8 +38,13 @@ const taskSlice = createSlice({
     deleteTask: (state, action: PayloadAction<string>) => {
       state.tasks = state.tasks.filter(task => task.id !== action.payload);
     },
+    // replace tasks (used when loading from persistent storage)
+    setTasks: (state, action: PayloadAction<Task[]>) => {
+      state.tasks = action.payload;
+    },
   },
 });
 
-export const { addTask, toggleTaskComplete, deleteTask } = taskSlice.actions;
+export const { addTask, toggleTaskComplete, deleteTask, setTasks } =
+  taskSlice.actions;
 export default taskSlice.reducer;
